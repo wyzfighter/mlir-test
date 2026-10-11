@@ -1,0 +1,392 @@
+OVERVIEW: FIR modular optimizer driver
+
+Available Dialects: acc, affine, arith, builtin, cf, complex, cuf, dlti, fir, fircg, func, gpu, hlfir, index, llvm, math, memref, mif, nvvm, omp, scf, vector
+USAGE: fir-opt [options] <input file>
+
+OPTIONS:
+
+Color Options:
+
+  --color                                                    - Use colors in output (default=autodetect)
+
+General options:
+
+  --allow-unregistered-dialect                               - Allow operation with no registered dialects
+  Compiler passes to run
+    Passes:
+      --abstract-result                                      -   Convert fir.array, fir.box and fir.rec function result to function argument
+        --abstract-result-as-box                             - Pass fir.array<T> result as fir.box<fir.array<T>> argument instead of fir.ref<fir.array<T>>.
+      --acc-if-clause-lowering                               -   Lower if clauses in ACC compute constructs
+      --acc-implicit-data                                    -   Generate implicit data attributes for OpenACC compute constructs
+        --enable-implicit-reduction-copy                     - Enable applying implicit copy in lieu of implicit firstprivate for reduction variables. This allows uniform treatment of reduction variables between combined constructs (e.g., 'parallel loop') and separate constructs (e.g., 'parallel' followed by 'loop'), where the OpenACC spec requires copy semantics for the former but firstprivate would normally apply for the latter.
+      --acc-implicit-declare                                 -   Applies implicit acc declare to globals referenced in compute and routine acc regions
+      --acc-implicit-routine                                 -   Generate implicit acc routine for functions in acc regions
+        --device-type=<value>                                - Target device type for implicit routine generation. Ensures that `acc routine` device_type clauses are properly considered not just default clauses.
+    =none                                              -   none
+    =host                                              -   host
+    =multicore                                         -   multicore
+    =nvidia                                            -   nvidia
+    =radeon                                            -   radeon
+      --acc-initialize-fir-analyses                          -   Initialize FIR analyses for OpenACC passes
+      --acc-legalize-serial                                  -   Legalize OpenACC serial constructs
+      --acc-loop-tiling                                      -   Tile OpenACC loops with tile clauses
+        --default-tile-size=<int>                            - Default tile size to use for wildcard ('*') tile sizes
+      --acc-specialize-for-device                            -   Strip OpenACC constructs inside device code
+      --acc-specialize-for-host                              -   Convert OpenACC operations for host execution
+        --enable-host-fallback                               - Enable host fallback mode which converts ALL ACC operations, not just orphan operations. Use this when the `if` clause evaluates to false.
+      --add-debug-info                                       -   Add the debug info
+        --debug-level=<value>                                - debug level
+    =Full                                              -   Emit full debug info
+    =LineTablesOnly                                    -   Emit line tables only
+    =None                                              -   Emit no debug information
+        --dwarf-version=<int>                                - dwarf version
+        --file-name=<string>                                 - name of the input source file
+        --is-optimized                                       - is optimized.
+        --split-dwarf-file=<string>                          - Name of the split dwarf file
+      --affine-data-copy-generate                            -   Generate explicit copying for affine memory operations
+        --fast-mem-capacity=<ulong>                          - Set fast memory space capacity in KiB (default: unlimited)
+        --fast-mem-space=<uint>                              - Fast memory space identifier for copy generation (default: 1)
+        --generate-dma                                       - Generate DMA instead of point-wise copy
+        --min-dma-transfer=<int>                             - Minimum DMA transfer size supported by the target in bytes
+        --skip-non-unit-stride-loops                         - Testing purposes: avoid non-unit stride loop choice depths for copy placement
+        --slow-mem-space=<uint>                              - Slow memory space identifier for copy generation (default: 0)
+        --tag-mem-space=<uint>                               - Tag memory space identifier for copy generation (default: 0)
+      --affine-loop-coalescing                               -   Coalesce nested loops with independent bounds into a single loop
+      --affine-loop-fusion                                   -   Fuse affine loop nests
+        --compute-tolerance=<number>                         - Fractional increase in additional computation tolerated while fusing
+        --fast-mem-space=<uint>                              - Faster memory space number to promote fusion buffers to
+        --local-buf-threshold=<ulong>                        - Threshold size (KiB) for promoting local buffers to fast memory space
+        --maximal                                            - Enables maximal loop fusion
+        --mode=<value>                                       - fusion mode to attempt
+    =greedy                                            -   Perform greedy (both producer-consumer and sibling)  fusion
+    =producer                                          -   Perform only producer-consumer fusion
+    =sibling                                           -   Perform only sibling fusion
+      --affine-loop-invariant-code-motion                    -   Hoist loop invariant instructions outside of affine loops
+      --affine-loop-tile                                     -   Tile affine loop nests
+        --cache-size=<ulong>                                 - Set size of cache to tile for in KiB (default: 512)
+        --separate                                           - Separate full and partial tiles (default: false)
+        --tile-size=<uint>                                   - Use this tile size for all loops
+        --tile-sizes=<uint>                                  - List of tile sizes for each perfect nest (overridden by -tile-size)
+      --affine-loop-unroll                                   -   Unroll affine loops
+        --cleanup-unroll                                     - Fully unroll the cleanup loop when possible.
+        --unroll-factor=<long>                               - Use this unroll factor for all loops being unrolled, set it to -1, and it will fully unroll.
+        --unroll-full-threshold=<uint>                       - Unroll all loops with trip count less than or equal to this
+        --unroll-num-reps=<uint>                             - Unroll innermost loops repeatedly this many times
+        --unroll-up-to-factor                                - Allow unrolling up to the factor specified
+      --affine-loop-unroll-jam                               -   Unroll and jam affine loops
+        --unroll-jam-factor=<uint>                           - Use this unroll jam factor for all loops (default 4)
+      --affine-pipeline-data-transfer                        -   Pipeline non-blocking data transfers between explicitly managed levels of the memory hierarchy
+      --affine-scalrep                                       -   Replace affine memref accesses by scalars by forwarding stores to loads and eliminating redundant loads
+      --affine-simplify-structures                           -   Simplify affine expressions in maps/sets and normalize memrefs
+      --affine-super-vectorize                               -   Vectorize to a target independent n-D vector abstraction
+        --test-fastest-varying=<long>                        - Specify a 1-D, 2-D or 3-D pattern of fastest varying memory dimensions to match. See defaultPatterns in Vectorize.cpp for a description and examples. This is used for testing purposes
+        --vectorize-reductions                               - Vectorize known reductions expressed via iter_args. Switched off by default.
+        --virtual-vector-size=<long>                         - Specify an n-D virtual vector size for vectorization. This must be greater than zero.
+      --annotate-constant                                    -   Annotate constant operands to all FIR operations
+      --array-value-copy                                     -   Convert array value operations to memory operations.
+        --optimize-conflicts                                 - do more detailed conflict analysis to reduce the number of temporaries
+      --boxed-procedure                                      -   
+        --use-thunks                                         - Convert procedure pointer abstractions to a single code pointer, deploying thunks wherever required.
+      --bufferize-hlfir                                      -   Convert HLFIR operations operating on hlfir.expr into operations on memory
+        --opt-empty-elementals                               - When converting hlfir.elemental into a loop nest, check if the resulting expression is an empty array, and make sure none of the loops is executed.
+      --canonicalize                                         -   Canonicalize operations
+        --disable-patterns=<string>                          - Labels of patterns that should be filtered out during application
+        --enable-patterns=<string>                           - Labels of patterns that should be used during application, all other patterns are filtered out
+        --max-iterations=<long>                              - Max. iterations between applying patterns / simplifying regions
+        --max-num-rewrites=<long>                            - Max. number of pattern rewrites within an iteration
+        --region-simplify=<value>                            - Perform control flow optimizations to the region tree
+    =disabled                                          -   Don't run any control-flow simplification.
+    =normal                                            -   Perform simple control-flow simplifications (e.g. dead args elimination).
+    =aggressive                                        -   Perform aggressive control-flow simplification (e.g. block merging).
+        --test-convergence                                   - Test only: Fail pass on non-convergence to detect cyclic pattern
+        --top-down                                           - Seed the worklist in general top-down order
+      --cfg-conversion                                       -   Convert FIR structured control flow ops to CFG ops.
+        --always-execute-loop-body                           - force the body of a loop to execute at least once
+        --set-nsw                                            - set nsw on loop variable increment
+      --cg-rewrite                                           -   Rewrite some FIR ops into their code-gen forms.
+        --preserve-declare                                   - Preserve DeclareOp during pre codegen re-write.
+      --character-conversion                                 -   Convert CHARACTER entities with different KINDs
+        --use-runtime-calls=<string>                         - Generate runtime calls to a named set of conversion routines. By default, the conversions may produce unexpected results.
+      --compiler-generated-names                             -   Convert names of compiler generated globals
+      --constant-argument-globalisation-opt                  -   Convert constant function arguments to global constants.
+      --convert-complex-pow                                  -   Convert complex.pow operations to library calls
+      --convert-hlfir-to-fir                                 -   Lower High-Level FIR to FIR
+      --cse                                                  -   Eliminate common sub-expressions
+      --cuf-add-constructor                                  -   Add constructor to register CUDA Fortran allocators
+      --cuf-allocation-convert                               -   Convert allocation related CUF operations to runtime calls
+      --cuf-compute-shared-memory                            -   Create the shared memory global variable and set offsets
+      --cuf-convert                                          -   Convert some CUF operations to runtime calls
+        --allocation-conversion                              - Convert allocation related operation with this pass
+      --cuf-device-global                                    -   Flag globals used in device function with data attribute
+      --cuf-function-rewrite                                 -   Convert some CUDA Fortran specific call
+      --cuf-gpu-convert-to-llvm                              -   Convert some GPU operations lowered from CUF to runtime calls
+      --cuf-launch-attach-attr                               -   Attach CUDA attribute to CUF kernel generated launch
+      --cuf-predefined-var-to-gpu                            -   Transform predefined variables to GPU operations
+      --cuf-transform-device-func                            -   Transform device function to GPU func
+        --compute-capability=<int>                           - CUDA compute capability version
+      --demote-affine                                        -   Converts `affine.{load,store}` back to fir operations
+      --external-name-interop                                -   Convert name for external interoperability
+        --append-underscore                                  - Append trailing underscore to external names.
+      --fir-acc-recipe-bufferization                         -   Rewrite acc.*.recipe box values to ref<box> and update uses
+      --fir-add-alias-tags                                   -   Add tbaa tags to operations that implement FirAliasAnalysisOpInterface
+      --fir-assumed-rank-op                                  -   Simplify operations on assumed-rank types
+      --fir-memref-dataflow-opt                              -   Perform store/load forwarding and potentially removing dead stores.
+      --fir-polymorphic-op                                   -   Simplify operations on polymorphic types
+      --fir-to-llvm-ir                                       -   Convert FIR dialect to LLVM-IR dialect
+        --apply-tbaa                                         - Attach TBAA tags to memory accessing operations.
+        --datalayout=<string>                                - Override module's data layout.
+        --target=<string>                                    - Override module's target triple.
+        --target-cpu=<string>                                - Override module's target CPU.
+        --target-features=<string>                           - Override module's target features.
+        --tune-cpu=<string>                                  - Override module's tune CPU.
+        --type-descriptors-renamed-for-assembly              - Global variables created to describe derived types have been renamed to avoid special symbols in their names.
+      --fir-to-scf                                           -   Convert FIR structured control flow ops to SCF dialect.
+        --parallel-unordered                                 - Allow converting a fir.do_loop with the `unordered` attribute to scf.parallel (experimental).
+      --flang-algebraic-simplification                       -   
+      --flang-licm                                           -   Hoist invariants from loops
+      --function-attr                                        -   Pass that adds function attributes expected at LLVM IR level
+        --approx-func-fp-math                                - Set the afn flag on instructions in the module.
+        --frame-pointer=<value>                              - frame pointer
+    =None
+    =NonLeaf
+    =All
+    =Reserved
+    =NonLeafNoReserve
+        --instrument-function-entry=<string>                 - Sets the name of the profiling function called during function entry
+        --instrument-function-exit=<string>                  - Sets the name of the profiling function called during function exit
+        --mrecip=<string>                                    - Set the reciprocal-estimates attribute on functions in the module.
+        --no-infs-fp-math                                    - Set the no-infs-fp-math attribute on functions in the module.
+        --no-nans-fp-math                                    - Set the no-nans-fp-math attribute on functions in the module.
+        --no-signed-zeros-fp-math                            - Set the no-signed-zeros-fp-math attribute on functions in the module.
+        --prefer-vector-width=<string>                       - Set the prefer-vector-width attribute on functions in the module.
+        --set-noalias                                        - Set LLVM noalias attribute on function arguments, if possible
+        --set-nocapture                                      - Set LLVM nocapture attribute on function arguments, if possible
+        --tune-cpu=<string>                                  - Set the tune-cpu attribute on functions in the module.
+        --unsafe-fp-math                                     - Set all fast-math flags on instructions in the module.
+      --gen-runtime-calls-for-test                           -   Print FIR containing declarations/calls of Fortran runtime functions
+        --do-generate-calls                                  - Generate thin wrapper functions that call Fortran runtime functions. If it is set to false, then only the declarations are generated.
+      --hlfir-expression-simplification                      -   Simplify Fortran expressions
+      --inline                                               -   Inline function calls
+        --default-pipeline=<string>                          - The optimizer pipeline used for callables that do not have a dedicated optimizer pipeline in opPipelineList
+        --inlining-threshold=<uint>                          - If the ratio between the number of the operations in the callee and the number of the operations in the caller exceeds this value (in percentage), then the callee is not inlined even if it is legal to inline it
+        --max-iterations=<uint>                              - Maximum number of iterations when inlining within an SCC
+        --op-pipelines=<pass-manager>                        - Callable operation specific optimizer pipelines (in the form of `dialect.op(pipeline)`)
+      --inline-elementals                                    -   Inline chained hlfir.elemental operations
+      --inline-hlfir-assign                                  -   Inline hlfir.assign operations
+      --inline-hlfir-copy-in                                 -   Inline hlfir.copy_in operations
+      --loop-invariant-code-motion                           -   Hoist loop invariant instructions outside of the loop
+      --loop-versioning                                      -   Loop Versioning
+      --lower-affine                                         -   Lower Affine operations to a combination of Arith and SCF operations
+      --lower-hlfir-intrinsics                               -   Lower HLFIR transformational intrinsic operations
+      --lower-hlfir-ordered-assignments                      -   Lower HLFIR ordered assignments like forall and where operations
+        --fuse-assignments                                   - Fuse Forall and Where assignments in the same loop nest when legal.It is not clear yet if this is always beneficial. It may be best toleave this to later loop optimizations.Hence this is off by default.
+      --lower-nontemporal                                    -   Adds nontemporal attribute to loads and stores performed on the list items specified in the nontemporal clause of omp.simd.
+      --lower-repack-arrays                                  -   Convert fir.pack/unpack_array to other FIR operations
+      --lower-workdistribute                                 -   Lower workdistribute construct
+      --lower-workshare                                      -   Lower workshare construct
+      --mem2reg                                              -   Promotes memory slots into values.
+        --region-simplify                                    - Perform control flow optimizations to the region tree
+      --memory-allocation-opt                                -   Convert stack to heap allocations and vice versa.
+        --dynamic-array-on-heap                              - Allocate all arrays with runtime determined size on heap.
+        --maximum-array-alloc-size=<ulong>                   - Set maximum number of elements of an array allocated on the stack.
+      --mif-convert                                          -   Convert some MIF operations to runtime calls
+      --offload-livein-value-canonicalization                -   Canonicalize live-in values for regions destined for outlining
+      --omp-automap-to-target-data                           -   Insert OpenMP target data operations for AUTOMAP variables
+      --omp-do-concurrent-conversion                         -   Map `DO CONCURRENT` loops to OpenMP worksharing loops.
+        --map-to=<value>                                     - Try to map `do concurrent` loops to OpenMP [none|host|device]
+    =none                                              -   Do not lower `do concurrent` to OpenMP
+    =host                                              -   Lower to run in parallel on the CPU
+    =device                                            -   Lower to run in parallel on the GPU
+      --omp-function-filtering                               -   Filters out functions intended for the host when compiling for the target device.
+      --omp-generic-loop-conversion                          -   Converts OpenMP generic `omp.loop` to semantically equivalent OpenMP ops
+      --omp-map-info-finalization                            -   expands OpenMP MapInfo operations containing descriptors
+      --omp-maps-for-privatized-symbols                      -   Creates MapInfoOp instances for privatized symbols when needed
+      --omp-mark-declare-target                              -   Marks all functions called by an OpenMP declare target function as declare target
+      --omp-simd-only                                        -   Filters out non-simd OpenMP constructs
+      --openacc-legalize-data-values                         -   Legalizes SSA values in compute regions with results from data clause operations
+        --apply-to-acc-data-construct                        - Replaces varPtr uses with accPtr for acc compute regions contained within acc.data or acc.declare region.
+        --host-to-device                                     - Replace varPtr uses with accPtr if true. Replace accPtr uses with varPtr if false
+      --opt-bufferization                                    -   Special cases for hlfir.expr bufferization where we can avoid a temporary which would be created by the generic bufferization pass
+      --optimize-array-repacking                             -   Optimizes redundant array repacking operations
+      --print-op-stats                                       -   Print statistics of operations
+        --json                                               - print the stats as JSON
+      --promote-to-affine                                    -   Promotes `fir.{do_loop,if}` to `affine.{for,if}`.
+      --propagate-fortran-attrs                              -   Propagate FortranVariableFlagsAttr attributes through HLFIR
+      --sccp                                                 -   Sparse Conditional Constant Propagation
+      --scf-for-loop-canonicalization                        -   Canonicalize operations within scf.for loop bodies
+      --scf-for-loop-peeling                                 -   Peel `for` loops at their upper bounds.
+        --peel-front                                         - Peel the first iteration out of the loop.
+        --skip-partial                                       - Do not peel loops inside of the last, partial iteration of another already peeled loop.
+      --scf-for-loop-range-folding                           -   Fold add/mul ops into loop range
+      --scf-for-loop-specialization                          -   Specialize `for` loops for vectorization
+      --scf-for-to-while                                     -   Convert SCF for loops to SCF while loops
+      --scf-forall-to-for                                    -   Convert SCF forall loops to SCF for loops
+      --scf-forall-to-parallel                               -   Convert SCF forall loops to SCF parallel loops
+      --scf-parallel-for-to-nested-fors                      -   Convert SCF parallel for loops to nested SCF for loops
+      --scf-parallel-loop-fusion                             -   Fuse adjacent parallel loops
+      --scf-parallel-loop-specialization                     -   Specialize parallel loops for vectorization
+      --scf-parallel-loop-tiling                             -   Tile parallel loops
+        --no-min-max-bounds                                  - Perform tiling with fixed upper bound with inbound check inside the internal loops
+        --parallel-loop-tile-sizes=<long>                    - Factors to tile parallel loops by
+      --set-runtime-call-attrs                               -   Set Fortran runtime fir.call attributes targeting LLVM IR
+      --simplify-fir-operations                              -   Simplifies complex FIR operations
+        --prefer-inline-implementation                       - Prefer expanding without using Fortran runtime calls.
+      --simplify-hlfir-intrinsics                            -   Simplify HLFIR intrinsic operations that don't need to result in runtime calls
+        --allow-new-side-effects                             - If enabled, then the HLFIR operations simplification may introduce operations with side effects. For example, hlfir.matmul may be inlined as and hlfir.eval_in_mem with hlfir.assign inside it.The hlfir.assign has a write effect on the memory argument of hlfir.eval_in_mem, which may block some existing MLIR transformations (e.g. CSE) that otherwise would have been possible across the hlfir.matmul.
+      --simplify-intrinsics                                  -   Intrinsics simplification
+        --enable-experimental                                - Enable experimental code that may not always work correctly
+      --simplify-region-lite                                 -   Region simplification
+      --snapshot-op-locations                                -   Generate new locations from the current IR
+        --filename=<string>                                  - The filename to print the generated IR
+        --pretty-debuginfo                                   - Print pretty debug info in MLIR output
+        --print-debuginfo                                    - Print debug info in MLIR output
+        --print-local-scope                                  - Print with local scope and inline information (eliding aliases for attributes, types, and locations
+        --print-op-generic                                   - Print the generic op form
+        --tag=<string>                                       - A tag to use when fusing the new locations with the original. If unset, the locations are replaced.
+      --stack-arrays                                         -   Move heap allocated array temporaries to the stack
+      --stack-reclaim                                        -   Insert stacksave/stackrestore in region with allocas
+      --strip-debuginfo                                      -   Strip debug info from all operations
+      --symbol-dce                                           -   Eliminate dead symbols
+      --target-rewrite                                       -   Rewrite some FIR dialect into target specific forms.
+        --no-character-conversion                            - Disable target-specific conversion of CHARACTER.
+        --no-complex-conversion                              - Disable target-specific conversion of COMPLEX.
+        --no-struct-conversion                               - Disable target-specific conversion of derived type value.
+        --target=<string>                                    - Override module's target triple.
+        --target-cpu=<string>                                - Override module's target CPU.
+        --target-features=<string>                           - Override module's target features.
+        --tune-cpu=<string>                                  - Override module's tune CPU.
+      --test-acc-pointer-like-interface                      -   Test OpenACC PointerLikeType interface methods on any implementing type
+        --test-mode=<string>                                 - Test mode: walk, alloc, copy, free, load, or store
+      --test-acc-recipe-populate                             -   Test OpenACC recipe population
+        --recipe-type=<string>                               - Recipe type: private or firstprivate
+      --test-acc-support                                     -   Test OpenACCSupport analysis
+      --test-fir-alias-analysis                              -   Test alias analysis results.
+      --test-fir-alias-analysis-modref                       -   Test alias analysis ModRef results.
+      --test-fir-openacc-interfaces                          -   Test FIR implementation of the OpenACC interfaces.
+      --test-scf-parallel-loop-collapsing                    -   Test parallel loops collapsing transformation
+        --collapsed-indices-0=<uint>                         - Which loop indices to combine 0th loop index
+        --collapsed-indices-1=<uint>                         - Which loop indices to combine into the position 1 loop index
+        --collapsed-indices-2=<uint>                         - Which loop indices to combine into the position 2 loop index
+      --test-side-effects                                    -   Test side effects interfaces
+      --vscale-attr                                          -   Add vscale_range attribute to functions
+        --vscale-range=<value>                               - vector scale range
+  --cfg-hide-cold-paths=<number>                             - Hide blocks with relative frequency below the given value
+  --cfg-hide-deoptimize-paths                                - 
+  --cfg-hide-unreachable-paths                               - 
+  --default-kinds=<default-kind-string>                      - string to set default kind values
+  --disable-auto-upgrade-debug-info                          - Disable autoupgrade of debug info
+  --disable-i2p-p2i-opt                                      - Disables inttoptr/ptrtoint roundtrip optimization
+  --disable-tbaa                                             - disable attaching TBAA tags to memory accessing operations to override default Flang behavior
+  --dot-cfg-mssa=<file name for generated dot file>          - file name for generated dot file
+  --dump-pass-pipeline                                       - Print the pipeline that will be run
+  --elide-all-zero-branch-weights                            - 
+  --elide-resource-data-from-bytecode                        - Elide resources when generating bytecode
+  --emit-bytecode                                            - Emit bytecode when generating output
+  --emit-bytecode-version=<value>                            - Use specified bytecode when generating output
+  --flang-dbg-order-assignment-schedule-only                 - Only run ordered assignment scheduling with no codegen
+  --flang-inline-matmul-as-elemental                         - Expand hlfir.matmul as elemental operation
+  --force-mlir-complex                                       - Force using MLIR complex operations instead of libm complex operations
+  --generate-merged-base-profiles                            - When generating nested context-sensitive profiles, always generate extra base profile for function with all its context profiles merged into it.
+  --inline-all                                               - aggressively inline everything
+  --irdl-file=<filename>                                     - IRDL file to register before processing the input
+  --kind-mapping=<kind-mapping-string>                       - kind mapping string to set kind precision
+  --length-to-hash-string-literal=<ulong>                    - string literals that exceed this length will use a hash value as their symbol name
+  --list-passes                                              - Print the list of registered passes and exit
+  --load-dialect-plugin=<string>                             - Load dialects from plugin library
+  --load-pass-plugin=<string>                                - Load passes from plugin library
+  --log-actions-to=<string>                                  - Log action execution to a file, or stderr if  '-' is passed
+  --log-mlir-actions-filter=<string>                         - Comma separated list of locations to filter actions from logging
+  --main-entry-name=<string>                                 - override the name of the default PROGRAM entry (may be helpful for using other runtimes)
+  --math-runtime=<value>                                     - Select math operations' runtime behavior:
+    =fast                                                    -   use fast runtime behavior
+    =relaxed                                                 -   use relaxed runtime behavior
+    =precise                                                 -   use precise runtime behavior
+  --mlir-debug-counter=<string>                              - Comma separated list of debug counter skip and count arguments
+  --mlir-diagnostic-verbosity-level=<value>                  - Choose level of diagnostic information
+    =errors                                                  -   Errors only
+    =warnings                                                -   Errors and warnings
+    =remarks                                                 -   Errors, warnings and remarks
+  --mlir-disable-diagnostic-notes                            - Disable diagnostic notes.
+  --mlir-disable-threading                                   - Disable multi-threading within MLIR, overrides any further call to MLIRContext::enableMultiThreading()
+  --mlir-elide-elementsattrs-if-larger=<uint>                - Elide ElementsAttrs with "..." that have more elements than the given upper limit
+  --mlir-elide-resource-strings-if-larger=<uint>             - Elide printing value of resources if string is too long in chars.
+  --mlir-enable-debugger-hook                                - Enable Debugger hook for debugging MLIR Actions
+  --mlir-generate-reproducer=<filename>                      - Generate an mlir reproducer at the provided filename (no crash required)
+  --mlir-output-format=<value>                               - Output format for timing data
+    =text                                                    -   display the results in text format
+    =json                                                    -   display the results in JSON format
+  --mlir-pass-pipeline-crash-reproducer=<string>             - Generate a .mlir reproducer file at the given output path if the pass manager crashes or fails
+  --mlir-pass-pipeline-local-reproducer                      - When generating a crash reproducer, attempt to generated a reproducer with the smallest pipeline.
+  --mlir-pass-statistics                                     - Display the statistics of each pass
+  --mlir-pass-statistics-display=<value>                     - Display method for pass statistics
+    =list                                                    -   display the results in a merged list sorted by pass name
+    =pipeline                                                -   display the results with a nested pipeline view
+  --mlir-pretty-debuginfo                                    - Print pretty debug info in MLIR output
+  --mlir-print-debug-counter                                 - Print out debug counter information after all counters have been accumulated
+  --mlir-print-debuginfo                                     - Print debug info in MLIR output
+  --mlir-print-elementsattrs-with-hex-if-larger=<long>       - Print DenseElementsAttrs with a hex string that have more elements than the given upper limit (use -1 to disable)
+  --mlir-print-ir-after=<pass-arg>                           - Print IR after specified passes
+  --mlir-print-ir-after-all                                  - Print IR after each pass
+  --mlir-print-ir-after-change                               - When printing the IR after a pass, only print if the IR changed
+  --mlir-print-ir-after-failure                              - When printing the IR after a pass, only print if the pass failed
+  --mlir-print-ir-before=<pass-arg>                          - Print IR before specified passes
+  --mlir-print-ir-before-all                                 - Print IR before each pass
+  --mlir-print-ir-module-scope                               - When printing IR for print-ir-[before|after]{-all} always print the top-level operation
+  --mlir-print-ir-tree-dir=<string>                          - When printing the IR before/after a pass, print file tree rooted at this directory. Use in conjunction with mlir-print-ir-* flags
+  --mlir-print-local-scope                                   - Print with local scope and inline information (eliding aliases for attributes, types, and locations)
+  --mlir-print-op-on-diagnostic                              - When a diagnostic is emitted on an operation, also print the operation as an attached note
+  --mlir-print-skip-regions                                  - Skip regions when printing ops.
+  --mlir-print-stacktrace-on-diagnostic                      - When a diagnostic is emitted, also print the stack trace as an attached note
+  --mlir-print-unique-ssa-ids                                - Print unique SSA ID numbers for values, block arguments and naming conflicts across all regions
+  --mlir-print-value-users                                   - Print users of operation results and block arguments as a comment
+  --mlir-timing                                              - Display execution times
+  --mlir-timing-display=<value>                              - Display method for timing data
+    =list                                                    -   display the results in a list sorted by total time
+    =tree                                                    -   display the results ina with a nested tree view
+  --mlir-use-nameloc-as-prefix                               - Print SSA IDs using NameLocs as prefixes
+  --mlir-very-unsafe-disable-verifier-on-parsing             - Disable the verifier on parsing (very unsafe)
+  --no-implicit-module                                       - Disable implicit addition of a top-level module op during parsing
+  --no-inline-hlfir-copy-in                                  - Do not inline hlfir.copy_in operations
+  -o <filename>                                              - Output filename
+  --object-size-offset-visitor-max-visit-instructions=<uint> - Maximum number of instructions for ObjectSizeOffsetVisitor to look at
+  --outline-intrinsics                                       - Lower all intrinsic procedure implementation in their own functions
+  --output-split-marker=<string>                             - Split marker to use for merging the ouput
+  --pass-pipeline=<string>                                   - Textual description of the pass pipeline to run
+  --profile-actions-to=<string>                              - Profile action execution to a file, or stderr if  '-' is passed
+  --run-reproducer                                           - Run the pipeline stored in the reproducer
+  --show-dialects                                            - Print the list of registered dialects and exit
+  --split-input-file[=<string>]                                - Split the input file into chunks using the given or default marker and process each chunk independently
+  --strict-fir-volatile-verifier                             - use stricter verifier for FIR operations with volatile types
+  --strict-intrinsic-verifier                                - use stricter verifier for HLFIR intrinsic operations
+  --tbaa-attach-tag-max=<uint>                               - 
+  --unsafe-cray-pointers                                     - Support Cray POINTERs that ALIAS with non-TARGET data
+  --verify-diagnostics                                       - Check that emitted diagnostics match expected-* lines on the corresponding line
+  --verify-diagnostics=<value>                               - Check that emitted diagnostics match expected-* lines on the corresponding line
+    =all                                                     -   Check all diagnostics (expected, unexpected, near-misses)
+    =<empty>                                                 -   Check all diagnostics (expected, unexpected, near-misses)
+    =only-expected                                           -   Check only expected diagnostics
+  --verify-each                                              - Run the verifier after each transformation pass
+  --verify-roundtrip                                         - Round-trip the IR after parsing and ensure it succeeds
+
+Generic Options:
+
+  --help                                                     - Display available options (--help-hidden for more)
+  --help-list                                                - Display list of available options (--help-list-hidden for more)
+  --version                                                  - Display the version of this program
+
+Remark Options:
+Filter remarks by regular expression (llvm::Regex syntax).
+
+  --remark-format=<value>                                    - Specify the format for remark output.
+    =emitRemark                                              -   Print as emitRemark to command-line
+    =yaml                                                    -   Print yaml file
+    =bitstream                                               -   Print bitstream file
+  --remark-policy=<value>                                    - Specify the policy for remark output.
+    =all                                                     -   Print all remarks
+    =final                                                   -   Print final remarks
+  --remarks-filter=<string>                                  - Show all remarks: passed, missed, failed, analysis
+  --remarks-filter-analyse=<string>                          - Show analysis remarks
+  --remarks-filter-failed=<string>                           - Show failed remarks
+  --remarks-filter-missed=<string>                           - Show missed remarks
+  --remarks-filter-passed=<string>                           - Show passed remarks
+  --remarks-output-file=<string>                             - Output file for yaml and bitstream remark formats. Default is mlir-remarks.yaml or mlir-remarks.bitstream

@@ -1,0 +1,15 @@
+digraph R1 {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Noto Sans CJK SC", fontsize=12, shape=box, style="rounded,filled", fillcolor="#EAF2FA", color="#2C5F8A", margin="0.18,0.1"];
+  edge [color="#2C5F8A", arrowhead=vee, fontname="Noto Sans CJK SC", fontsize=10];
+  A [label="ODS 定义\ndef ParallelOp : OpenMP_Op<\"parallel\">"];
+  B [label="TableGen 生成\nParallelOp 类 + getOperationName()\n返回 \"omp.parallel\""];
+  C [label="OpenMPDialect::initialize()\naddOperations<GET_OP_LIST>"];
+  D [label="RegisteredOperationName::insert"];
+  E [label="registeredOperationsByName（哈希表）\n字符串 → 类型 + parse 函数指针"];
+  A -> B [label="编译期展开"];
+  B -> C;
+  C -> D;
+  D -> E;
+}

@@ -1,0 +1,4 @@
+OMP: pid 9 tid 9 thread 0 bound to OS proc set {0}
+OMP: pid 9 tid 10 thread 1 bound to OS proc set {1}
+OMP: pid 9 tid 11 thread 2 bound to OS proc set {2}
+OMP: pid 9 tid 12 thread 3 bound to OS proc set {3}

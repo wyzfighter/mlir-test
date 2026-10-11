@@ -1,0 +1,13 @@
+digraph R2 {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Noto Sans CJK SC", fontsize=12, shape=box, style="rounded,filled", fillcolor="#EAF7EE", color="#3E8E5A", margin="0.18,0.1"];
+  edge [color="#3E8E5A", arrowhead=vee, fontname="Noto Sans CJK SC", fontsize=10];
+  A [label="parseSourceFile"];
+  B [label="OperationParser::parseOperation\n读到 bare_identifier \"omp.parallel\""];
+  C [label="parseCustomOperationName"];
+  D [label="RegisteredOperationName::lookup(\"omp.parallel\")\n查 registeredOperationsByName"];
+  E [label="命中 → ParallelOp::parse\n（assemblyFormat 生成的 parse 函数）"];
+  F [label="region / clauses 解析完成"];
+  A -> B -> C -> D -> E -> F;
+}

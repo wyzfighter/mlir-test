@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1440" viewBox="0 0 1240 1440" font-family="'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif">
+  <defs>
+    <marker id="arrBlue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2C5F8A"/>
+    </marker>
+    <marker id="arrOrange" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#D08C2C"/>
+    </marker>
+    <marker id="arrRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#C0564B"/>
+    </marker>
+    <marker id="arrGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#3E8E5A"/>
+    </marker>
+    <marker id="arrPurple" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#7A5FA8"/>
+    </marker>
+  </defs>
+
+  <rect width="1240" height="1440" fill="#FAFBFD"/>
+
+  <!-- 标题 -->
+  <text x="620" y="44" text-anchor="middle" font-size="26" font-weight="bold" fill="#1F2933">OpenMPToLLVMIRTranslation.cpp 在干什么：OpenMP Dialect → LLVM IR（直译路径）</text>
+  <text x="620" y="70" text-anchor="middle" font-size="14" fill="#6B7280">mlir/lib/Target/LLVMIR/Dialect/OpenMP/OpenMPToLLVMIRTranslation.cpp（共 7304 行，行号均已核对）</text>
+
+  <!-- 分隔线 -->
+  <line x1="790" y1="96" x2="790" y2="1360" stroke="#E2E4E8" stroke-width="1.5"/>
+
+  <!-- ===== 主流程（左列） ===== -->
+
+  <!-- 1. 输入 -->
+  <rect x="80" y="100" width="660" height="60" rx="8" fill="#EAF2FB" stroke="#2C5F8A" stroke-width="1.5"/>
+  <text x="410" y="136" text-anchor="middle" font-size="15" fill="#22313F">输入：final MLIR 模块（含 omp.parallel / omp.wsloop / omp.loop_nest）</text>
+
+  <line x1="410" y1="160" x2="410" y2="196" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 2. 入口 -->
+  <rect x="80" y="200" width="660" height="60" rx="8" fill="#EAF2FB" stroke="#2C5F8A" stroke-width="1.5"/>
+  <text x="410" y="226" text-anchor="middle" font-size="15" fill="#22313F">入口：mlir-translate / tco → translateModuleToLLVMIR</text>
+  <text x="410" y="248" text-anchor="middle" font-size="13" fill="#55606B">ModuleTranslation.cpp:2383</text>
+
+  <line x1="410" y1="260" x2="410" y2="296" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 3. 钩子 -->
+  <rect x="80" y="300" width="660" height="60" rx="8" fill="#EAF2FB" stroke="#2C5F8A" stroke-width="1.5"/>
+  <text x="410" y="336" text-anchor="middle" font-size="14" fill="#22313F">ModuleTranslation::convertOperation（ModuleTranslation.cpp:993）→ 按 op 找 dialect 翻译接口</text>
+
+  <line x1="410" y1="360" x2="410" y2="396" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 4. 接口分叉 -->
+  <rect x="80" y="400" width="660" height="96" rx="8" fill="#FFF7E8" stroke="#D08C2C" stroke-width="1.8"/>
+  <text x="410" y="428" text-anchor="middle" font-size="15" font-weight="bold" fill="#7A4E0F">OpenMPDialectLLVMIRTranslationInterface::convertOperation（本文件 :7279）</text>
+  <text x="410" y="452" text-anchor="middle" font-size="14" fill="#22313F">分叉：ompBuilder-&gt;Config.isTargetDevice() ?</text>
+  <text x="410" y="474" text-anchor="middle" font-size="12" fill="#8A7A5A">（config 由 amendOperation :7170 从模块 omp.* 属性写入）</text>
+
+  <line x1="237" y1="496" x2="237" y2="536" stroke="#C0564B" stroke-width="1.8" marker-end="url(#arrOrange)"/>
+  <line x1="583" y1="496" x2="583" y2="536" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 设备路径 -->
+  <rect x="80" y="540" width="315" height="74" rx="8" fill="#FFEEEE" stroke="#C0564B" stroke-width="1.5"/>
+  <text x="237" y="562" text-anchor="middle" font-size="13" fill="#7A2E25">是 → target / GPU 路径（kernel 生成）</text>
+  <text x="237" y="582" text-anchor="middle" font-size="13" fill="#22313F">convertTargetDeviceOp /</text>
+  <text x="237" y="600" text-anchor="middle" font-size="13" fill="#22313F">convertTargetOpsInNest</text>
+
+  <!-- 主机路径 -->
+  <rect x="425" y="540" width="315" height="74" rx="8" fill="#EAF2FB" stroke="#2C5F8A" stroke-width="1.5"/>
+  <text x="583" y="562" text-anchor="middle" font-size="13" fill="#22313F">否 → 主机路径（语义降级）</text>
+  <text x="583" y="582" text-anchor="middle" font-size="13" fill="#22313F">convertHostOrTargetOperation</text>
+  <text x="583" y="600" text-anchor="middle" font-size="12" fill="#55606B">（:6866 大 TypeSwitch 分派）</text>
+
+  <line x1="237" y1="614" x2="237" y2="656" stroke="#C0564B" stroke-width="1.8" marker-end="url(#arrRed)"/>
+  <line x1="583" y1="614" x2="583" y2="656" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 5. 分派器 -->
+  <rect x="80" y="660" width="660" height="56" rx="8" fill="#EAF2FB" stroke="#2C5F8A" stroke-width="1.5"/>
+  <text x="410" y="684" text-anchor="middle" font-size="15" font-weight="bold" fill="#22313F">convertHostOrTargetOperation（:6866）</text>
+  <text x="410" y="704" text-anchor="middle" font-size="13" fill="#55606B">TypeSwitch：每个 omp op → 对应 convertOmpXxx</text>
+
+  <line x1="410" y1="716" x2="410" y2="756" stroke="#2C5F8A" stroke-width="1.8" marker-end="url(#arrBlue)"/>
+
+  <!-- 6. 转换器容器 -->
+  <rect x="80" y="760" width="660" height="250" rx="8" fill="#F7FAF7" stroke="#3E8E5A" stroke-width="1.5"/>
+  <text x="410" y="788" text-anchor="middle" font-size="14" font-weight="bold" fill="#2C5A3E">convertOmpXxx 具体转换器（每个 omp op 一个）</text>
+
+  <rect x="105" y="800" width="300" height="88" rx="6" fill="#EAF7EC" stroke="#3E8E5A" stroke-width="1.3"/>
+  <text x="255" y="824" text-anchor="middle" font-size="13" fill="#22313F">convertOmpParallel (:3100)</text>
+  <text x="255" y="844" text-anchor="middle" font-size="12" fill="#55606B">createParallel（OMPIRBuilder.cpp:1574）</text>
+  <text x="255" y="864" text-anchor="middle" font-size="12" fill="#7A2E25">→ __kmpc_fork_call</text>
+
+  <rect x="415" y="800" width="300" height="88" rx="6" fill="#EAF7EC" stroke="#3E8E5A" stroke-width="1.3"/>
+  <text x="565" y="824" text-anchor="middle" font-size="13" fill="#22313F">convertOmpLoopNest (:3496)</text>
+  <text x="565" y="844" text-anchor="middle" font-size="12" fill="#55606B">createCanonicalLoop (:5275)</text>
+  <text x="565" y="864" text-anchor="middle" font-size="12" fill="#55606B">→ CanonicalLoopInfo</text>
+
+  <rect x="105" y="902" width="300" height="88" rx="6" fill="#EAF7EC" stroke="#3E8E5A" stroke-width="1.3"/>
+  <text x="255" y="926" text-anchor="middle" font-size="13" fill="#22313F">convertOmpWsloop (:2890)</text>
+  <text x="255" y="946" text-anchor="middle" font-size="12" fill="#55606B">applyWorkshareLoop</text>
+  <text x="255" y="966" text-anchor="middle" font-size="12" fill="#7A2E25">→ __kmpc_for_static_init_4u (:5328/:8052)</text>
+
+  <rect x="415" y="902" width="300" height="88" rx="6" fill="#EAF7EC" stroke="#3E8E5A" stroke-width="1.3"/>
+  <text x="565" y="926" text-anchor="middle" font-size="13" fill="#22313F">其他 omp op</text>
+  <text x="565" y="946" text-anchor="middle" font-size="12" fill="#55606B">barrier / critical / sections / single / task /</text>
+  <text x="565" y="966" text-anchor="middle" font-size="12" fill="#55606B">taskloop / atomic / target(:6342) / threadprivate…</text>
+
+  <line x1="410" y1="1010" x2="410" y2="1046" stroke="#3E8E5A" stroke-width="1.8" marker-end="url(#arrGreen)"/>
+
+  <!-- 7. OpenMPIRBuilder -->
+  <rect x="80" y="1050" width="660" height="74" rx="8" fill="#F5F0FA" stroke="#6B4E9E" stroke-width="1.5"/>
+  <text x="410" y="1076" text-anchor="middle" font-size="15" fill="#22313F">llvm::OpenMPIRBuilder（llvm/lib/Frontend/OpenMP/OMPIRBuilder.cpp）</text>
+  <text x="410" y="1098" text-anchor="middle" font-size="13" fill="#55606B">生成 outline 函数、captured args 结构体、barrier、__kmpc_* 运行时调用</text>
+
+  <line x1="410" y1="1124" x2="410" y2="1164" stroke="#6B4E9E" stroke-width="1.8" marker-end="url(#arrPurple)"/>
+
+  <!-- 8. 输出 -->
+  <rect x="80" y="1168" width="660" height="66" rx="8" fill="#EEF2FA" stroke="#3F5E8C" stroke-width="1.5"/>
+  <text x="410" y="1194" text-anchor="middle" font-size="15" fill="#22313F">输出：LLVM IR Module（含 __kmpc_fork_call / __kmpc_for_static_init_4u）</text>
+  <text x="410" y="1216" text-anchor="middle" font-size="12" fill="#55606B">mlir-translate 与 tco 两路在此汇合（translateModuleToLLVMIR :2383）</text>
+
+  <!-- 9. 对照说明 -->
+  <rect x="80" y="1278" width="660" height="92" rx="8" fill="#F7F7F2" stroke="#8A8A6E" stroke-width="1.3"/>
+  <text x="410" y="1302" text-anchor="middle" font-size="13" font-weight="bold" fill="#5A5A44">对照：Conversion 路径 OpenMPToLLVM.cpp 只做类型合法化</text>
+  <text x="410" y="1324" text-anchor="middle" font-size="13" fill="#55606B">（index→i64、memref→descriptor），op 结构与语义不变，</text>
+  <text x="410" y="1346" text-anchor="middle" font-size="13" fill="#55606B">不生成 __kmpc_* —— 语义降级只发生在 Translation 路径（本文件）</text>
+
+  <!-- ===== 右列：支撑设施 ===== -->
+  <text x="805" y="316" font-size="16" font-weight="bold" fill="#5A3E8A">支撑设施 / 关键机制</text>
+
+  <rect x="805" y="330" width="395" height="96" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="356" font-size="13" font-weight="bold" fill="#3A2458">convertOmpOpRegions (:535)</text>
+  <text x="822" y="378" font-size="13" fill="#4A3A5A">region → LLVM basic block</text>
+  <text x="822" y="398" font-size="13" fill="#4A3A5A">omp.yield → continuation PHI</text>
+  <line x1="805" y1="378" x2="750" y2="378" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+  <rect x="805" y="456" width="395" height="78" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="482" font-size="13" font-weight="bold" fill="#3A2458">checkImplementationStatus (:317)</text>
+  <text x="822" y="504" font-size="13" fill="#4A3A5A">未实现 clause → 报错并拒绝降级</text>
+  <line x1="805" y1="495" x2="750" y2="495" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+  <rect x="805" y="564" width="395" height="78" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="590" font-size="13" font-weight="bold" fill="#3A2458">handleError (:448)</text>
+  <text x="822" y="612" font-size="13" fill="#4A3A5A">llvm::Error / Expected → MLIR 诊断</text>
+  <line x1="805" y1="603" x2="750" y2="603" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+  <rect x="805" y="672" width="395" height="78" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="698" font-size="13" font-weight="bold" fill="#3A2458">amendOperation (:7170)</text>
+  <text x="822" y="720" font-size="13" fill="#4A3A5A">omp.* 模块属性 → OpenMPIRBuilderConfig / module flags</text>
+  <line x1="805" y1="711" x2="750" y2="711" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+  <rect x="805" y="780" width="395" height="96" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="806" font-size="13" font-weight="bold" fill="#3A2458">ModuleTranslation 映射表</text>
+  <text x="822" y="828" font-size="13" fill="#4A3A5A">lookupValue / mapValue / convertType</text>
+  <text x="822" y="848" font-size="13" fill="#4A3A5A">（ompBuilder 惰性创建 :2269）</text>
+  <line x1="805" y1="828" x2="750" y2="828" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+  <rect x="805" y="906" width="395" height="60" rx="8" fill="#F6F2FC" stroke="#7A5FA8" stroke-width="1.3"/>
+  <text x="822" y="932" font-size="13" font-weight="bold" fill="#3A2458">registerOpenMPDialectTranslation (:7293)</text>
+  <text x="822" y="952" font-size="13" fill="#4A3A5A">把接口挂到 OpenMP dialect</text>
+  <line x1="805" y1="936" x2="750" y2="936" stroke="#7A5FA8" stroke-width="1.4" stroke-dasharray="5,4" marker-end="url(#arrPurple)"/>
+
+</svg>

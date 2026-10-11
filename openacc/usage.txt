@@ -1,0 +1,33 @@
+1. 制导：
+OMP: !$omp <directive> [clause...]
+ACC: !$acc <directive> [clause...]
+2. 常见的directive：
+    1. parallel:
+        OMP:
+            !$omp parallel [clause...]
+                code block
+            [!$omp end parallel]
+        ACC:
+            !$acc parallel [clause...]
+                code block
+            [!$acc end parallel]
+
+
+!$acc parallel loop gang vector copy(a(1:n), b(1:n)) private(i)
+do i = 1, n
+    a(i) = a(i) + b(i) * 2.0
+end do
+!$acc end parallel loop
+
+!$ACC PARALLEL
+!$ACC LOOP GANG
+do i = 1, ni        ! 外层：分配给 gang
+    !$ACC LOOP WORKER
+    do j = 1, nj    ! 中层：分配给 worker
+        !$ACC LOOP VECTOR
+        do k = 1, nk   ! 内层：分配给 vector
+            a(i,j,k) = b(i,j,k) * c(i,j,k)
+        end do
+    end do
+end do
+!$ACC END PARALLEL

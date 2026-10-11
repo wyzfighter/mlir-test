@@ -1,0 +1,15 @@
+digraph R4 {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Noto Sans CJK SC", fontsize=12, shape=box, style="rounded,filled", margin="0.18,0.1"];
+  edge [arrowhead=vee, fontname="Noto Sans CJK SC", fontsize=10];
+  A [label="omp.parallel\noperands 可能为 memref / index\n等非 LLVM 类型", fillcolor="#FDF6E3", color="#B58900"];
+  B1 [label="Conversion 路线\nOpenMPOpConversion<T>\n::matchAndRewrite\n换结果类型 / 换 TypeAttr / 换 operands\nconvertRegionTypes / T::create 重建", fillcolor="#EAF2FA", color="#2C5F8A"];
+  C1 [label="omp.parallel（LLVM 类型）\nop 结构与语义不变\n不生成任何运行时调用", fillcolor="#EAF2FA", color="#2C5F8A"];
+  B2 [label="Translation 路线\nOpenMPDialectLLVMIRTranslationInterface\n::convertOperation\n→ convertOmpParallel", fillcolor="#F3EEFA", color="#7A5FA8"];
+  C2 [label="LLVM IR\noutline 函数 + __kmpc_fork_call\n+ __kmpc_for_static_init_4u", fillcolor="#F3EEFA", color="#7A5FA8"];
+  A -> B1 [label="类型合法化"];
+  A -> B2 [label="语义降级"];
+  B1 -> C1;
+  B2 -> C2;
+}

@@ -1,0 +1,31 @@
+digraph R11 {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Noto Sans CJK SC", fontsize=11, shape=box, style="rounded,filled", margin="0.15,0.08"];
+  edge [fontname="Noto Sans CJK SC", fontsize=10, arrowhead=vee];
+  subgraph cluster_mlir {
+    label="MLIR 侧 node"; style="rounded,dashed"; color="#2C5F8A"; fontname="Noto Sans CJK SC";
+    Op [label="Operation\n五口袋：operands / results\nattributes+properties / regions\ntraits+interfaces", fillcolor="#EAF2FA", color="#2C5F8A"];
+    Parallel [label="omp::ParallelOp\n6 clauses / 0 results / 1 region", fillcolor="#EAF2FA", color="#2C5F8A"];
+  }
+  subgraph cluster_map {
+    label="ModuleTranslation"; style="rounded,dashed"; color="#B58900"; fontname="Noto Sans CJK SC";
+    Map [label="valueMapping\nblockMapping\nfunctionMapping\nloopMapping\ntypeTranslator / iface", fillcolor="#FDF6E3", color="#B58900"];
+  }
+  subgraph cluster_llvm {
+    label="LLVM 侧 node"; style="rounded,dashed"; color="#3E8E5A"; fontname="Noto Sans CJK SC";
+    Val [label="llvm::Value\nllvm::BasicBlock\nllvm::Function\nllvm::GlobalVariable", fillcolor="#EAF7EE", color="#3E8E5A"];
+  }
+  subgraph cluster_builder {
+    label="OpenMPIRBuilder"; style="rounded,dashed"; color="#7A5FA8"; fontname="Noto Sans CJK SC";
+    Bld [label="createParallel\ncreateCanonicalLoop\napplyWorkshareLoop", fillcolor="#F3EEFA", color="#7A5FA8"];
+    RT [label="__kmpc_fork_call\n__kmpc_for_static_init_4u\n__kmpc_barrier", fillcolor="#F3EEFA", color="#7A5FA8"];
+  }
+  Op -> Parallel [label="实例化"];
+  Parallel -> Map [label="LLVMTranslationDialectInterface\n::convertOperation（翻译边）"];
+  Map -> Val [label="mapValue / mapBlock\n/ functionMapping"];
+  Map -> Bld [label="getOpenMPBuilder"];
+  Bld -> RT [label="生成运行时调用"];
+  Note [label="边：SSA use-def（数据依赖）\n+ convertOperation（翻译逻辑）", shape=note, style="dashed,filled", fillcolor="#F9EFE7", color="#D08C2C"];
+  Op -> Note [style=dashed, arrowhead=none];
+}

@@ -1,0 +1,62 @@
+digraph G {
+  rankdir=TB;
+  graph [fontname="Noto Sans CJK SC", bgcolor="white", pad="0.3", nodesep="0.45", ranksep="0.55"];
+  node  [fontname="Noto Sans CJK SC", fontsize=11, style="rounded,filled", shape=box];
+  edge  [fontname="Noto Sans CJK SC", fontsize=10, arrowsize=0.8];
+
+  // ===== 顶部：IR node =====
+  irnode [label="IR node\nomp.parallel / omp.wsloop / omp.loop_nest\n（operand/result 类型可能仍是非 LLVM 类型：\nindex / fir / memref）", fillcolor="#ede9fe"];
+
+  // ===== 驱动链：mlir-opt =====
+  subgraph cluster_drv {
+    label="入口与驱动（mlir-opt + PassManager）";
+    style=dashed; color="#7c3aed";
+
+    opt  [label="mlir-opt 入口\nmlir/lib/Tools/mlir-opt/MlirOptMain.cpp\n（-p / --pass-pipeline 指定 pass）", fillcolor="#ede9fe"];
+    pm   [label="PassManager → runOnOperation\nmlir/lib/Pass/Pass.cpp", fillcolor="#ede9fe"];
+    pass [label="ConvertOpenMPToLLVMPass::runOnOperation\nmlir/lib/Conversion/OpenMPToLLVM/OpenMPToLLVM.cpp:174", fillcolor="#ede9fe"];
+  }
+
+  // ===== 配置 =====
+  config [label="转换配置\nLLVMTypeConverter + LLVMConversionTarget + RewritePatternSet\n（Arith / CF / Assert / MemRef / Func / OpenMP patterns）\n直接合法：Barrier / Flush / Taskwait / Taskyield / Terminator\n动态合法：其余 omp op（类型已 LLVM 化）\nconfigureOpenMPToLLVMConversionLegality\nmlir/lib/Conversion/OpenMPToLLVM/OpenMPToLLVM.cpp:122", fillcolor="#cffafe"];
+
+  // ===== 转换驱动 =====
+  subgraph cluster_conv {
+    label="转换框架（DialectConversion）";
+    style=dashed; color="#0891b2";
+
+    partial    [label="applyPartialConversion\nmlir/lib/Transforms/Utils/DialectConversion.cpp:4180", fillcolor="#cffafe"];
+    applicator [label="PatternApplicator::matchAndRewrite\nmlir/lib/Rewrite/PatternApplicator.cpp:132", fillcolor="#cffafe"];
+  }
+
+  // ===== pattern 动作 =====
+  pattern [label="OpenMPOpConversion<T>::matchAndRewrite\nmlir/lib/Conversion/OpenMPToLLVM/OpenMPToLLVM.cpp:41\n① LLVMTypeConverter 转换 result/operand 类型\n② TypeAttr 类型转换\n③ T::create 重建同名 omp op（类型已 LLVM 化）\n④ region 原地保留 + convertRegionTypes\n⑤ replaceOp 替换旧 op", fillcolor="#fef9c3"];
+
+  // ===== 产物与后续 =====
+  subgraph cluster_out {
+    label="产物：仍是 MLIR（LLVM 类型化），出 .ll 还要再直译一步";
+    style=solid; color="#475569";
+
+    out_omp [label="类型已 LLVM 化的 omp op\n（仍叫 omp.parallel / omp.wsloop）\n结构未变：未 outline、未生成 runtime 调用", fillcolor="#f1f5f9"];
+    out_note [label="注意：Conversion 不做 outline / 代码生成\n（CanonicalLoopInfo 类型被保留，\n见 OpenMPToLLVM.cpp:46-50 注释）", fillcolor="#fef3c7", style="rounded,filled,dashed"];
+    translate [label="LLVMDialectToLLVM 直译\nmlir::translateModuleToLLVMIR\nmlir/lib/Target/LLVMIR/ModuleTranslation.cpp:2383", fillcolor="#f1f5f9"];
+    out_ll [label="真正的 LLVM IR（llvm::Module → .ll）\n__kmpc_fork_call / __kmpc_for_static_init_4u /\n__kmpc_barrier、outline 函数等", fillcolor="#f1f5f9"];
+  }
+
+  // ===== 对照节点 =====
+  contrast [label="对照：直译路径\nomp → LLVM IR 一步到位\n（见 openmp_dispatch.png：\nconvertOperation → TypeSwitch →\nOpenMPIRBuilder → runtime 调用）", fillcolor="#ffffff", style="rounded,dashed"];
+
+  // ===== 边 =====
+  irnode -> opt;
+  opt  -> pm;
+  pm   -> pass;
+  pass -> config;
+  config -> partial;
+  partial -> applicator;
+  applicator -> pattern;
+  pattern -> out_omp;
+  out_omp -> translate;
+  translate -> out_ll;
+  out_omp -> out_note [style=dashed, label="关键差异"];
+  contrast -> out_ll [style=dashed, label="两条路线最终汇合"];
+}

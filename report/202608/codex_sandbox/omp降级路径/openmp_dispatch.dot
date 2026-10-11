@@ -1,0 +1,79 @@
+digraph G {
+  rankdir=TB;
+  graph [fontname="Noto Sans CJK SC", bgcolor="white", pad="0.3", nodesep="0.45", ranksep="0.55"];
+  node  [fontname="Noto Sans CJK SC", fontsize=11, style="rounded,filled", shape=box];
+  edge  [fontname="Noto Sans CJK SC", fontsize=10, arrowsize=0.8];
+
+  // ===== 顶部：IR node =====
+  irnode [label="IR node\nomp.parallel\n(mlir::omp::ParallelOp)\nname = \"omp.parallel\"", fillcolor="#dbeafe"];
+
+  // ===== 前置：字符串 -> 类型绑定 =====
+  binding [label="解析期绑定\nRegisteredOperationName::lookup\n\"omp.parallel\" → registeredOperationsByName\n→ ParallelOp C++ 类型\nmlir/lib/IR/MLIRContext.cpp:953\n（注册：OpenMPDialect::initialize → addOperations\nmlir/lib/Dialect/OpenMP/IR/OpenMPDialect.cpp:307）", fillcolor="#e0e7ff", style="rounded,filled,dashed"];
+
+  // ===== 第 1 层：按 dialect 路由 =====
+  subgraph cluster_l1 {
+    label="第 1 层：按 dialect 路由 —— 这一坨是谁家的";
+    style=dashed; color="#2563eb";
+
+    l1_conv  [label="ModuleTranslation::convertOperation\nmlir/lib/Target/LLVMIR/ModuleTranslation.cpp:993", fillcolor="#dbeafe"];
+    l1_iface [label="LLVMTranslationInterface::getInterfaceFor(&op)\n按 op->getDialect() 哈希查表\nmlir/include/mlir/IR/DialectInterface.h:170", fillcolor="#dbeafe"];
+    l1_hit   [label="命中：OpenMPDialectLLVMIRTranslationInterface\n注册：registerOpenMPDialectTranslation\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:7293", fillcolor="#dcfce7"];
+    l1_miss  [label="未命中：emitError\n\"missing LLVMTranslationDialectInterface\nregistration\"", fillcolor="#fee2e2"];
+  }
+
+  // ===== 第 2 层：按 op 类型分派 =====
+  subgraph cluster_l2 {
+    label="第 2 层：按 op 类型分派 —— 这一个 op 是谁";
+    style=dashed; color="#16a34a";
+
+    l2_conv   [label="OpenMPDialectLLVMIRTranslationInterface::convertOperation\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:7279\n→ convertHostOrTargetOperation\nOpenMPToLLVMIRTranslation.cpp:6866", fillcolor="#dcfce7"];
+    l2_switch [label="llvm::TypeSwitch<Operation*, …>\n（内部是 dyn_cast，C++ 类型匹配）\nllvm/include/llvm/ADT/TypeSwitch.h:89", fillcolor="#dcfce7"];
+    l2_par    [label="omp::ParallelOp → convertOmpParallel\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:3098", fillcolor="#fef9c3"];
+    l2_ws     [label="omp::WsloopOp → convertOmpWsloop\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:2891", fillcolor="#fef9c3"];
+    l2_ln     [label="omp::LoopNestOp → convertOmpLoopNest\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:3497", fillcolor="#fef9c3"];
+    l2_skip   [label="omp.yield / omp.terminator → 直接跳过\n（结构已在父 op 翻译时建好）", fillcolor="#fef9c3"];
+    l2_def    [label="其它 op → \"not yet implemented\"", fillcolor="#fee2e2"];
+  }
+
+  // ===== 第 3 层：按语义参数选 runtime 函数 =====
+  subgraph cluster_l3 {
+    label="第 3 层：按语义参数选 runtime 函数 —— 翻译成哪个 libomp 函数";
+    style=dashed; color="#ea580c";
+
+    l3_par [label="convertOmpParallel\nmlir/lib/Target/LLVMIR/Dialect/OpenMP/\nOpenMPToLLVMIRTranslation.cpp:3098\n→ OpenMPIRBuilder::createParallel\n（定义 llvm/lib/Frontend/OpenMP/OMPIRBuilder.cpp:1574；\n调用于 OpenMPToLLVMIRTranslation.cpp:3277）\n→ hostParallelCallback\nllvm/lib/Frontend/OpenMP/OMPIRBuilder.cpp:1493\n→ __kmpc_fork_call", fillcolor="#ffedd5"];
+    l3_ws  [label="convertOmpWsloop\nOpenMPToLLVMIRTranslation.cpp:2891\n→ OpenMPIRBuilder::applyWorkshareLoop\nllvm/lib/Frontend/OpenMP/OMPIRBuilder.cpp:5907\n→ createForStaticInitFunction\nOMPIRBuilder.cpp:8039\nIVSize=32 && !IVSigned → __kmpc_for_static_init_4u", fillcolor="#ffedd5"];
+    l3_ln  [label="convertOmpLoopNest\nOpenMPToLLVMIRTranslation.cpp:3497\n→ llvm::CanonicalLoopInfo\nllvm/include/llvm/Frontend/OpenMP/OMPIRBuilder.h\n（循环结构句柄交给 OpenMPIRBuilder）", fillcolor="#ffedd5"];
+  }
+
+  // ===== 底部：生成的 LLVM IR node =====
+  subgraph cluster_out {
+    label="生成的 LLVM IR node（对照 parallel_do.f90.ll）";
+    style=solid; color="#475569";
+
+    out_fork [label="call @__kmpc_fork_call\n(@1, 1, @_QQmain..omp_par, %structArg)", fillcolor="#f1f5f9"];
+    out_par  [label="define @_QQmain..omp_par\n（outline 出的并行区函数）", fillcolor="#f1f5f9"];
+    out_init [label="call @__kmpc_for_static_init_4u\n(…, 34 /* static */, …)", fillcolor="#f1f5f9"];
+    out_bar  [label="call @__kmpc_for_static_fini\ncall @__kmpc_barrier", fillcolor="#f1f5f9"];
+  }
+
+  // ===== 边 =====
+  irnode  -> binding [label="字符串 → 类型"];
+  binding -> l1_conv;
+  l1_conv -> l1_iface;
+  l1_iface -> l1_hit;
+  l1_iface -> l1_miss [label="未注册时"];
+  l1_hit  -> l2_conv;
+  l2_conv -> l2_switch;
+  l2_switch -> l2_par;
+  l2_switch -> l2_ws;
+  l2_switch -> l2_ln;
+  l2_switch -> l2_skip;
+  l2_switch -> l2_def;
+  l2_par -> l3_par;
+  l2_ws  -> l3_ws;
+  l2_ln  -> l3_ln;
+  l3_par -> out_fork;
+  out_fork -> out_par [label="outline"];
+  l3_ws  -> out_init;
+  out_init -> out_bar;
+}

@@ -1,0 +1,19 @@
+digraph R3 {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Noto Sans CJK SC", fontsize=12, shape=box, style="rounded,filled", fillcolor="#F3EEFA", color="#7A5FA8", margin="0.18,0.1"];
+  edge [color="#7A5FA8", arrowhead=vee, fontname="Noto Sans CJK SC", fontsize=10];
+  A [label="translateModuleToLLVMIR"];
+  B [label="ModuleTranslation::convertOperation\n（对模块内每个 op）"];
+  C [label="iface.getInterfaceFor(&op)\n按 op 所属 dialect 查翻译接口"];
+  D [label="OpenMPDialectLLVMIRTranslationInterface\n::convertOperation"];
+  E [label="ompBuilder->Config.isTargetDevice() ?\n设备路径 : 主机路径"];
+  F [label="convertHostOrTargetOperation\n（TypeSwitch 按 op 类型分派）"];
+  G1 [label="convertOmpParallel\n→ OpenMPIRBuilder::createParallel\n→ __kmpc_fork_call"];
+  G2 [label="convertOmpLoopNest\n→ OpenMPIRBuilder::createCanonicalLoop\n→ CanonicalLoopInfo"];
+  G3 [label="convertOmpWsloop\n→ applyWorkshareLoop\n→ __kmpc_for_static_init_4u"];
+  A -> B -> C -> D -> E -> F;
+  F -> G1;
+  F -> G2;
+  F -> G3;
+}
