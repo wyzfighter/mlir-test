@@ -1,0 +1,28 @@
+Dialect
+{
+    name = ?, summary = ?, description = ? : string
+    dependentDialects = [] : list<string>
+    discardableAttrs = (ins) : dag // ins是参数列表
+    cppNamespace = name : string
+    extraClassDeclaration = "" : code
+    {
+        useStrictPropertiesInAssemblyFormat // 
+        hasConstantMaterializer
+        hasNonDefaultDestructor
+        hasOperationAttrVerify
+        hasRegionArgAttrVerify
+        hasRegionResultAttrVerify
+        hasOperationInterfaceFallback
+        useDefaultAttributePrinterParser
+        useDefaultTypePrinterParser
+        hasCanonicalizer
+        isExtensible
+    }
+}
+
+OPENMP_OP
+{
+    
+}
+
+omp.parallel
