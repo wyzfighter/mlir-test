@@ -7,6 +7,9 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
   func.func @_QQmain() attributes {fir.bindc_name = "MAIN"} {
     %c1_i32 = arith.constant 1 : i32
     %c3_i32 = arith.constant 3 : i32
+    %c2_i32 = arith.constant 2 : i32
+    %c5 = arith.constant 5 : index
+    %c1 = arith.constant 1 : index
     %c1234_i32 = arith.constant 1234 : i32
     %c100000 = arith.constant 100000 : index
     %0 = fir.dummy_scope : !fir.dscope
@@ -18,22 +21,32 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
     %6 = fir.alloca i32 {bindc_name = "n", uniq_name = "_QFEn"}
     %7:2 = hlfir.declare %6 {uniq_name = "_QFEn"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
     hlfir.assign %c1234_i32 to %7#0 : i32, !fir.ref<i32>
-    acc.parallel combined(loop) {
-      %8 = fir.load %7#0 : !fir.ref<i32>
-      %9 = acc.private varPtr(%5#0 : !fir.ref<i32>) recipe(@privatization_ref_i32) implicit(true) name("i") -> !fir.ref<i32>
-      acc.loop combined(parallel) private(%9 : !fir.ref<i32>) control(%arg0 : i32) = (%c3_i32 : i32) to (%8 : i32)  step (%c1_i32 : i32) {
-        %10:2 = hlfir.declare %9 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
-        fir.store %arg0 to %10#0 : !fir.ref<i32>
-        %11 = fir.load %10#0 : !fir.ref<i32>
-        %12 = arith.muli %11, %11 : i32
-        %13 = arith.addi %11, %11 overflow<nsw> : i32
-        %14 = fir.convert %13 : (i32) -> i64
-        %15 = hlfir.designate %3#0 (%14)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
-        hlfir.assign %12 to %15 : i32, !fir.ref<i32>
+    %8 = fir.load %7#0 : !fir.ref<i32>
+    %9 = arith.muli %8, %c2_i32 : i32
+    %10 = fir.convert %9 : (i32) -> index
+    %11 = arith.subi %10, %c1 : index
+    %12 = acc.bounds lowerbound(%c5 : index) upperbound(%11 : index) extent(%c100000 : index) stride(%c1 : index) startIdx(%c1 : index)
+    %13 = acc.copyin varPtr(%3#0 : !fir.ref<!fir.array<100000xi32>>) bounds(%12) dataClause(acc_copy) name("a(6:2_4*n)") -> !fir.ref<!fir.array<100000xi32>>
+    acc.data dataOperands(%13 : !fir.ref<!fir.array<100000xi32>>) {
+      acc.parallel combined(loop) {
+        %14 = fir.load %7#0 : !fir.ref<i32>
+        %15 = acc.private varPtr(%5#0 : !fir.ref<i32>) recipe(@privatization_ref_i32) implicit(true) name("i") -> !fir.ref<i32>
+        acc.loop combined(parallel) private(%15 : !fir.ref<i32>) control(%arg0 : i32) = (%c3_i32 : i32) to (%14 : i32)  step (%c1_i32 : i32) {
+          %16:2 = hlfir.declare %15 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
+          fir.store %arg0 to %16#0 : !fir.ref<i32>
+          %17 = fir.load %16#0 : !fir.ref<i32>
+          %18 = arith.muli %17, %17 : i32
+          %19 = arith.addi %17, %17 overflow<nsw> : i32
+          %20 = fir.convert %19 : (i32) -> i64
+          %21 = hlfir.designate %3#0 (%20)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
+          hlfir.assign %18 to %21 : i32, !fir.ref<i32>
+          acc.yield
+        } inclusiveUpperbound(array<i1: true>) independent 
         acc.yield
-      } inclusiveUpperbound(array<i1: true>) independent 
-      acc.yield
+      }
+      acc.terminator
     }
+    acc.copyout accPtr(%13 : !fir.ref<!fir.array<100000xi32>>) bounds(%12) to varPtr(%3#0 : !fir.ref<!fir.array<100000xi32>>) dataClause(acc_copy) name("a(6:2_4*n)")
     return
   }
   fir.global internal @_QFEa {alignment = 64 : i64} : !fir.array<100000xi32> {

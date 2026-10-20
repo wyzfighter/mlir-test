@@ -18,18 +18,24 @@ mkdir -p "$OUT"
 
 ARCH="${ARCH:-gfx906}"
 TRIPLE="amdgcn-amd-amdhsa"
+COV="${COV:-5}"                          # code object version
+ROCM_PATH="${ROCM_PATH:-/opt/dtk-23.04.1}"
 INSTALL="${INSTALL:-/home/wangyz/.llvm/install}"
 FLANG="${FLANG:-$INSTALL/bin/flang-new}"
 
-# 1) 新版 clang 要求 ROCm device library ABI 6 (ROCm >= 6.3)，本机 DTK 23.04.1 太旧，
-#    因此用 -nogpulib 跳过 ROCm device lib，并手动把 OpenMP device RTL 交给 device 链接器，
-#    否则 __kmpc_target_deinit 未定义。
-RTL="$INSTALL/lib/amdgcn-amd-amdhsa/libomptarget-amdgpu.bc"
+# 1) ROCm 版本兼容（关键）:
+#    flang/clang 默认 -mcode-object-version=6，要求 ROCm device library ABI 600
+#    (即 ROCm >= 6.3)。本机 DTK 23.04.1 只提供 oclc_abi_version_400/500.bc，
+#    所以必须显式降到 5，否则报:
+#      cannot find ROCm device library for ABI version 6, which requires
+#      ROCm 6.3 or higher
+#    -mcode-object-version= 在 Options.td 里的 Visibility 含 FlangOption，
+#    可直接传给 flang。取值: none | 4 | 5 | 6
 OFFLOAD_FLAGS=(
   -fopenmp-targets="$TRIPLE"
   --offload-arch="$ARCH"
-  -nogpulib
-  -Xoffload-linker "$RTL"
+  -mcode-object-version="$COV"
+  --rocm-path="$ROCM_PATH"
 )
 
 # 2) libomptarget.so 在 install/lib/<host-triple>/ 下，而该目录不在默认 LD_LIBRARY_PATH 里

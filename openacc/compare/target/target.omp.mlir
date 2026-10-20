@@ -6,6 +6,8 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
     %c1 = arith.constant 1 : index
     %c1_i32 = arith.constant 1 : i32
     %c3_i32 = arith.constant 3 : i32
+    %c5 = arith.constant 5 : index
+    %c5_i32 = arith.constant 5 : i32
     %c1234_i32 = arith.constant 1234 : i32
     %c100000 = arith.constant 100000 : index
     %0 = fir.dummy_scope : !fir.dscope
@@ -17,30 +19,32 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
     %6 = fir.alloca i32 {bindc_name = "n", uniq_name = "_QFEn"}
     %7:2 = hlfir.declare %6 {uniq_name = "_QFEn"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
     hlfir.assign %c1234_i32 to %7#0 : i32, !fir.ref<i32>
-    %8 = fir.load %7#0 : !fir.ref<i32>
-    %9 = omp.map.info var_ptr(%5#1 : !fir.ref<i32>, i32) map_clauses(implicit) capture(ByCopy) name("i") -> !fir.ref<i32>
-    %10 = omp.map.info var_ptr(%7#1 : !fir.ref<i32>, i32) map_clauses(implicit) capture(ByCopy) name("n") -> !fir.ref<i32>
-    %11 = omp.map.bounds lower_bound(%c0 : index) upper_bound(%c99999 : index) extent(%c100000 : index) stride(%c1 : index) start_idx(%c1 : index)
-    %12 = omp.map.info var_ptr(%3#1 : !fir.ref<!fir.array<100000xi32>>, !fir.array<100000xi32>) map_clauses(implicit, tofrom) capture(ByRef) bounds(%11) name("a") -> !fir.ref<!fir.array<100000xi32>>
-    omp.target kernel_type(spmd) host_eval(%c3_i32 -> %arg0, %8 -> %arg1, %c1_i32 -> %arg2 : i32, i32, i32) map_entries(%9 -> %arg3, %10 -> %arg4, %12 -> %arg5 : !fir.ref<i32>, !fir.ref<i32>, !fir.ref<!fir.array<100000xi32>>) {
+    %8 = hlfir.designate %3#0 (%c5)  : (!fir.ref<!fir.array<100000xi32>>, index) -> !fir.ref<i32>
+    hlfir.assign %c5_i32 to %8 : i32, !fir.ref<i32>
+    %9 = fir.load %7#0 : !fir.ref<i32>
+    %10 = omp.map.info var_ptr(%5#1 : !fir.ref<i32>, i32) map_clauses(implicit) capture(ByCopy) name("i") -> !fir.ref<i32>
+    %11 = omp.map.info var_ptr(%7#1 : !fir.ref<i32>, i32) map_clauses(implicit) capture(ByCopy) name("n") -> !fir.ref<i32>
+    %12 = omp.map.bounds lower_bound(%c0 : index) upper_bound(%c99999 : index) extent(%c100000 : index) stride(%c1 : index) start_idx(%c1 : index)
+    %13 = omp.map.info var_ptr(%3#1 : !fir.ref<!fir.array<100000xi32>>, !fir.array<100000xi32>) map_clauses(implicit, tofrom) capture(ByRef) bounds(%12) name("a") -> !fir.ref<!fir.array<100000xi32>>
+    omp.target kernel_type(spmd) host_eval(%c3_i32 -> %arg0, %9 -> %arg1, %c1_i32 -> %arg2 : i32, i32, i32) map_entries(%10 -> %arg3, %11 -> %arg4, %13 -> %arg5 : !fir.ref<i32>, !fir.ref<i32>, !fir.ref<!fir.array<100000xi32>>) {
       %c100000_0 = arith.constant 100000 : index
-      %13:2 = hlfir.declare %arg3 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
-      %14:2 = hlfir.declare %arg4 {uniq_name = "_QFEn"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
-      %15 = fir.shape %c100000_0 : (index) -> !fir.shape<1>
-      %16:2 = hlfir.declare %arg5(%15) {uniq_name = "_QFEa"} : (!fir.ref<!fir.array<100000xi32>>, !fir.shape<1>) -> (!fir.ref<!fir.array<100000xi32>>, !fir.ref<!fir.array<100000xi32>>)
+      %14:2 = hlfir.declare %arg3 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
+      %15:2 = hlfir.declare %arg4 {uniq_name = "_QFEn"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
+      %16 = fir.shape %c100000_0 : (index) -> !fir.shape<1>
+      %17:2 = hlfir.declare %arg5(%16) {uniq_name = "_QFEa"} : (!fir.ref<!fir.array<100000xi32>>, !fir.shape<1>) -> (!fir.ref<!fir.array<100000xi32>>, !fir.ref<!fir.array<100000xi32>>)
       omp.teams {
-        omp.parallel private(@_QFEi_private_i32 %13#0 -> %arg6 : !fir.ref<i32>) {
-          %17:2 = hlfir.declare %arg6 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
+        omp.parallel private(@_QFEi_private_i32 %14#0 -> %arg6 : !fir.ref<i32>) {
+          %18:2 = hlfir.declare %arg6 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
           omp.distribute {
             omp.wsloop {
               omp.loop_nest (%arg7) : i32 = (%arg0) to (%arg1) inclusive step (%arg2) {
-                hlfir.assign %arg7 to %17#0 : i32, !fir.ref<i32>
-                %18 = fir.load %17#0 : !fir.ref<i32>
-                %19 = arith.muli %18, %18 : i32
-                %20 = arith.addi %18, %18 overflow<nsw> : i32
-                %21 = fir.convert %20 : (i32) -> i64
-                %22 = hlfir.designate %16#0 (%21)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
-                hlfir.assign %19 to %22 : i32, !fir.ref<i32>
+                hlfir.assign %arg7 to %18#0 : i32, !fir.ref<i32>
+                %19 = fir.load %18#0 : !fir.ref<i32>
+                %20 = arith.muli %19, %19 : i32
+                %21 = arith.addi %19, %19 overflow<nsw> : i32
+                %22 = fir.convert %21 : (i32) -> i64
+                %23 = hlfir.designate %17#0 (%22)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
+                hlfir.assign %20 to %23 : i32, !fir.ref<i32>
                 omp.yield
               }
             } {omp.composite}

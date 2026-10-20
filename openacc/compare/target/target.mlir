@@ -10,38 +10,49 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
     %6 = llvm.mlir.constant(1 : i64) : i64
     %7 = llvm.mlir.constant(1 : i32) : i32
     %8 = llvm.mlir.constant(3 : i32) : i32
-    %9 = llvm.mlir.constant(1234 : i32) : i32
-    %10 = llvm.mlir.constant(100000 : i64) : i64
-    %11 = llvm.mlir.addressof @_QFEa : !llvm.ptr
-    %12 = llvm.mlir.constant(1 : i64) : i64
-    %13 = llvm.mlir.constant(1 : i64) : i64
-    llvm.store %9, %1 <tbaa = [#llvm.tbaa_tag<base_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
-    %14 = llvm.load %1 <tbaa = [#llvm.tbaa_tag<base_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : !llvm.ptr -> i32
-    %15 = omp.map.info var_ptr(%3 : !llvm.ptr, i32) map_clauses(implicit) capture(ByCopy) name("i") -> !llvm.ptr
-    %16 = omp.map.info var_ptr(%1 : !llvm.ptr, i32) map_clauses(implicit) capture(ByCopy) name("n") -> !llvm.ptr
-    %17 = omp.map.bounds lower_bound(%5 : i64) upper_bound(%4 : i64) extent(%10 : i64) stride(%6 : i64) start_idx(%6 : i64)
-    %18 = omp.map.info var_ptr(%11 : !llvm.ptr, !llvm.array<100000 x i32>) map_clauses(implicit, tofrom) capture(ByRef) bounds(%17) name("a") -> !llvm.ptr
-    omp.target kernel_type(spmd) host_eval(%8 -> %arg0, %14 -> %arg1, %7 -> %arg2 : i32, i32, i32) map_entries(%15 -> %arg3, %16 -> %arg4, %18 -> %arg5 : !llvm.ptr, !llvm.ptr, !llvm.ptr) {
-      %19 = llvm.mlir.constant(100000 : i64) : i64
+    %9 = llvm.mlir.constant(5 : i64) : i64
+    %10 = llvm.mlir.constant(5 : i32) : i32
+    %11 = llvm.mlir.constant(1234 : i32) : i32
+    %12 = llvm.mlir.constant(100000 : i64) : i64
+    %13 = llvm.mlir.addressof @_QFEa : !llvm.ptr
+    %14 = llvm.mlir.constant(1 : i64) : i64
+    %15 = llvm.mlir.constant(1 : i64) : i64
+    llvm.store %11, %1 <tbaa = [#llvm.tbaa_tag<base_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
+    %16 = llvm.mlir.constant(1 : i64) : i64
+    %17 = llvm.mlir.constant(0 : i64) : i64
+    %18 = llvm.sub %9, %16 overflow<nsw, nuw> : i64
+    %19 = llvm.mul %18, %16 overflow<nsw, nuw> : i64
+    %20 = llvm.mul %19, %16 overflow<nsw, nuw> : i64
+    %21 = llvm.add %20, %17 overflow<nsw, nuw> : i64
+    %22 = llvm.mul %16, %12 overflow<nsw, nuw> : i64
+    %23 = llvm.getelementptr nusw|nuw %13[%21] : (!llvm.ptr, i64) -> !llvm.ptr, i32
+    llvm.store %10, %23 <tbaa = [#llvm.tbaa_tag<base_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
+    %24 = llvm.load %1 <tbaa = [#llvm.tbaa_tag<base_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "allocated data/_QFEn", members = {<#llvm.tbaa_type_desc<id = "allocated data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : !llvm.ptr -> i32
+    %25 = omp.map.info var_ptr(%3 : !llvm.ptr, i32) map_clauses(implicit) capture(ByCopy) name("i") -> !llvm.ptr
+    %26 = omp.map.info var_ptr(%1 : !llvm.ptr, i32) map_clauses(implicit) capture(ByCopy) name("n") -> !llvm.ptr
+    %27 = omp.map.bounds lower_bound(%5 : i64) upper_bound(%4 : i64) extent(%12 : i64) stride(%6 : i64) start_idx(%6 : i64)
+    %28 = omp.map.info var_ptr(%13 : !llvm.ptr, !llvm.array<100000 x i32>) map_clauses(implicit, tofrom) capture(ByRef) bounds(%27) name("a") -> !llvm.ptr
+    omp.target kernel_type(spmd) host_eval(%8 -> %arg0, %24 -> %arg1, %7 -> %arg2 : i32, i32, i32) map_entries(%25 -> %arg3, %26 -> %arg4, %28 -> %arg5 : !llvm.ptr, !llvm.ptr, !llvm.ptr) {
+      %29 = llvm.mlir.constant(100000 : i64) : i64
       omp.teams {
         omp.parallel private(@_QFEi_private_i32 %arg3 -> %arg6 : !llvm.ptr) {
           omp.distribute {
             omp.wsloop {
               omp.loop_nest (%arg7) : i32 = (%arg0) to (%arg1) inclusive step (%arg2) {
                 llvm.store %arg7, %arg6 <tbaa = [#llvm.tbaa_tag<base_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, access_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
-                %20 = llvm.load %arg6 <tbaa = [#llvm.tbaa_tag<base_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, access_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, offset = 0>]> : !llvm.ptr -> i32
-                %21 = llvm.mul %20, %20 : i32
-                %22 = llvm.add %20, %20 overflow<nsw> : i32
-                %23 = llvm.sext %22 : i32 to i64
-                %24 = llvm.mlir.constant(1 : i64) : i64
-                %25 = llvm.mlir.constant(0 : i64) : i64
-                %26 = llvm.sub %23, %24 overflow<nsw, nuw> : i64
-                %27 = llvm.mul %26, %24 overflow<nsw, nuw> : i64
-                %28 = llvm.mul %27, %24 overflow<nsw, nuw> : i64
-                %29 = llvm.add %28, %25 overflow<nsw, nuw> : i64
-                %30 = llvm.mul %24, %19 overflow<nsw, nuw> : i64
-                %31 = llvm.getelementptr nusw|nuw %arg5[%29] : (!llvm.ptr, i64) -> !llvm.ptr, i32
-                llvm.store %21, %31 <tbaa = [#llvm.tbaa_tag<base_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
+                %30 = llvm.load %arg6 <tbaa = [#llvm.tbaa_tag<base_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, access_type = <id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, offset = 0>]> : !llvm.ptr -> i32
+                %31 = llvm.mul %30, %30 : i32
+                %32 = llvm.add %30, %30 overflow<nsw> : i32
+                %33 = llvm.sext %32 : i32 to i64
+                %34 = llvm.mlir.constant(1 : i64) : i64
+                %35 = llvm.mlir.constant(0 : i64) : i64
+                %36 = llvm.sub %33, %34 overflow<nsw, nuw> : i64
+                %37 = llvm.mul %36, %34 overflow<nsw, nuw> : i64
+                %38 = llvm.mul %37, %34 overflow<nsw, nuw> : i64
+                %39 = llvm.add %38, %35 overflow<nsw, nuw> : i64
+                %40 = llvm.mul %34, %29 overflow<nsw, nuw> : i64
+                %41 = llvm.getelementptr nusw|nuw %arg5[%39] : (!llvm.ptr, i64) -> !llvm.ptr, i32
+                llvm.store %31, %41 <tbaa = [#llvm.tbaa_tag<base_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, access_type = <id = "global data/_QFEa", members = {<#llvm.tbaa_type_desc<id = "global data", members = {<#llvm.tbaa_type_desc<id = "any data access", members = {<#llvm.tbaa_type_desc<id = "any access", members = {<#llvm.tbaa_root<id = "Flang function root _QQmain">, 0>}>, 0>}>, 0>}>, 0>}>, offset = 0>]> : i32, !llvm.ptr
                 omp.yield
               }
             } {omp.composite}

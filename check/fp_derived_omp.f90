@@ -14,7 +14,7 @@ program fp_derived
   integer :: i
   type(pair_t) :: p
   p%v = 5
-  !$omp parallel do private(p)
+  !$omp parallel do firstprivate(p)
   do i = 1, 5
      p%v = p%v + i
      print '(A,I0)', 'fp_derived ', p%v

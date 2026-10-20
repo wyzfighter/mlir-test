@@ -6,6 +6,9 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
   func.func @_QQmain() attributes {fir.bindc_name = "MAIN"} {
     %c1_i32 = arith.constant 1 : i32
     %c3_i32 = arith.constant 3 : i32
+    %c2_i32 = arith.constant 2 : i32
+    %c5 = arith.constant 5 : index
+    %c1 = arith.constant 1 : index
     %c1234_i32 = arith.constant 1234 : i32
     %c100000 = arith.constant 100000 : index
     %0 = fir.dummy_scope : !fir.dscope
@@ -18,32 +21,42 @@ module attributes {dlti.dl_spec = #dlti.dl_spec<!llvm.ptr<270> = dense<32> : vec
     %7:2 = hlfir.declare %6 {uniq_name = "_QFEn"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
     hlfir.assign %c1234_i32 to %7#0 : i32, !fir.ref<i32>
     %8 = fir.load %7#0 : !fir.ref<i32>
-    %9 = omp.map.info var_ptr(%4 : !fir.ref<i32>, i32) map_clauses(tofrom) capture(ByRef) -> !fir.ref<i32>
-    %10 = omp.map.info var_ptr(%3#0 : !fir.ref<!fir.array<100000xi32>>, !fir.array<100000xi32>) map_clauses(tofrom) capture(ByRef) -> !fir.ref<!fir.array<100000xi32>>
-    omp.target kernel_type(spmd_no_loop) host_eval(%c3_i32 -> %arg0, %8 -> %arg1, %c1_i32 -> %arg2 : i32, i32, i32) map_entries(%9 -> %arg3, %10 -> %arg4 : !fir.ref<i32>, !fir.ref<!fir.array<100000xi32>>) {
-      omp.teams {
-        omp.parallel private(@acc_private_0 %arg3 -> %arg5 : !fir.ref<i32>) {
-          omp.distribute {
-            omp.wsloop {
-              omp.loop_nest (%arg6) : i32 = (%arg0) to (%arg1) inclusive step (%arg2) {
-                %11:2 = hlfir.declare %arg5 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
-                fir.store %arg6 to %11#0 : !fir.ref<i32>
-                %12 = fir.load %11#0 : !fir.ref<i32>
-                %13 = arith.muli %12, %12 : i32
-                %14 = arith.addi %12, %12 overflow<nsw> : i32
-                %15 = fir.convert %14 : (i32) -> i64
-                %16 = hlfir.designate %arg4 (%15)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
-                hlfir.assign %13 to %16 : i32, !fir.ref<i32>
-                omp.yield
-              }
+    %9 = arith.muli %8, %c2_i32 : i32
+    %10 = fir.convert %9 : (i32) -> index
+    %11 = arith.subi %10, %c1 : index
+    %12 = acc.bounds lowerbound(%c5 : index) upperbound(%11 : index) extent(%c100000 : index) stride(%c1 : index) startIdx(%c1 : index)
+    %13 = acc.copyin varPtr(%3#0 : !fir.ref<!fir.array<100000xi32>>) bounds(%12) dataClause(acc_copy) name("a(6:2_4*n)") -> !fir.ref<!fir.array<100000xi32>>
+    acc.data dataOperands(%13 : !fir.ref<!fir.array<100000xi32>>) {
+      %14 = fir.load %7#0 : !fir.ref<i32>
+      %15 = omp.map.info var_ptr(%3#0 : !fir.ref<!fir.array<100000xi32>>, !fir.array<100000xi32>) map_clauses(tofrom) capture(ByRef) -> !fir.ref<!fir.array<100000xi32>>
+      omp.target kernel_type(spmd_no_loop) host_eval(%c3_i32 -> %arg0, %14 -> %arg1, %c1_i32 -> %arg2 : i32, i32, i32) map_entries(%15 -> %arg3 : !fir.ref<!fir.array<100000xi32>>) {
+        omp.teams {
+          omp.parallel {
+            %16 = fir.alloca i32 {acc.var_name = #acc.var_name<"<acc.varname.placeholder>">, bindc_name = "acc.private.init"}
+            omp.distribute {
+              omp.wsloop {
+                omp.loop_nest (%arg4) : i32 = (%arg0) to (%arg1) inclusive step (%arg2) {
+                  %17:2 = hlfir.declare %16 {uniq_name = "_QFEi"} : (!fir.ref<i32>) -> (!fir.ref<i32>, !fir.ref<i32>)
+                  fir.store %arg4 to %17#0 : !fir.ref<i32>
+                  %18 = fir.load %17#0 : !fir.ref<i32>
+                  %19 = arith.muli %18, %18 : i32
+                  %20 = arith.addi %18, %18 overflow<nsw> : i32
+                  %21 = fir.convert %20 : (i32) -> i64
+                  %22 = hlfir.designate %arg3 (%21)  : (!fir.ref<!fir.array<100000xi32>>, i64) -> !fir.ref<i32>
+                  hlfir.assign %19 to %22 : i32, !fir.ref<i32>
+                  omp.yield
+                }
+              } {omp.composite}
             } {omp.composite}
+            omp.terminator
           } {omp.composite}
           omp.terminator
-        } {omp.composite}
+        } {omp.combined}
         omp.terminator
       } {omp.combined}
-      omp.terminator
-    } {omp.combined}
+      acc.terminator
+    }
+    acc.copyout accPtr(%13 : !fir.ref<!fir.array<100000xi32>>) bounds(%12) to varPtr(%3#0 : !fir.ref<!fir.array<100000xi32>>) dataClause(acc_copy) name("a(6:2_4*n)")
     return
   }
   fir.global internal @_QFEa {alignment = 64 : i64} : !fir.array<100000xi32> {

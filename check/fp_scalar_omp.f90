@@ -6,7 +6,7 @@ program fp_scalar
   implicit none
   integer :: i, x
   x = 7
-  !$omp parallel do private(x)
+  !$omp parallel do firstprivate(x)
   do i = 1, 4
      x = x + i
      print '(A,I0)', 'fp_scalar ', x
